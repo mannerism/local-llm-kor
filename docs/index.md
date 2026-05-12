@@ -11,7 +11,7 @@ hero:
       link: /guide/1-prep/
     - theme: alt
       text: GitHub에서 보기
-      link: https://github.com/dearmannerism/local-llm
+      link: https://github.com/mannerism/local-llm-kor
 
 features:
   - title: 처음부터 끝까지

@@ -26,8 +26,8 @@
 ### 큰 수정·새 편 추가
 
 ```sh
-git clone https://github.com/dearmannerism/local-llm.git
-cd local-llm
+git clone https://github.com/mannerism/local-llm-kor.git
+cd local-llm-kor
 pnpm install
 pnpm dev
 ```
