@@ -10,7 +10,7 @@
     "build": "node scripts/sync.mjs --forward && vitepress build docs",
     "preview": "vitepress preview docs"
   },
-  "license": "MIT",
+  "license": "CC-BY-SA-4.0",
   "devDependencies": {
     "@types/node": "^25.7.0",
     "vitepress": "^1.6.4"

@@ -53,8 +53,10 @@ PR 제출 시 [기여자 라이선스 동의(CLA)](./CONTRIBUTING.md#3-라이선
 
 ## 라이선스
 
-- 코드 (`scripts/`, `docs/.vitepress/`, 빌드 도구) — [MIT](./LICENSE)
-- 본문·이미지 (`docs/guide/**`) — [CC BY-SA 4.0](./LICENSE-CONTENT)
+[CC BY-SA 4.0](./LICENSE) — 자유롭게 복사·재배포·번역·개작 가능. 단:
+
+- **Attribution (저작자 표시)**: "디어매너리즘 + 본 저장소 URL" 출처 표시
+- **ShareAlike (동일조건 변경허락)**: 개작물도 같은 CC BY-SA 4.0 로 공개
 
 상업 출판·강의 패키지 등 별도 라이선스가 필요하시면 <dearmannerism@gmail.com> 으로 연락주세요.
 
