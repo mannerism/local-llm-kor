@@ -263,3 +263,4 @@ EOF
 ```
 
 **4) Pi에서 `/model` 한 번 더 누르면** — `models.json` 자동 재로딩, 새 contextWindow 반영 (재시작 불필요).
+![[Xnip2026-05-12_20-33-56.png]]
