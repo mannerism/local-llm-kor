@@ -1,0 +1,4 @@
+# docs/guide/ 는 Obsidian vault 와 byte-for-byte 미러.
+# Prettier 가 markdown 을 reformat 하면 reverse-sync diff 가 cosmetic noise 로 도배됨.
+# 절대 손대지 않음.
+docs/guide/

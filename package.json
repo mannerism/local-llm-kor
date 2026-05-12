@@ -5,15 +5,14 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "sync": "node scripts/sync-from-obsidian.mjs",
-    "reverse-sync": "node scripts/reverse-sync.mjs",
-    "reverse-sync:dry": "node scripts/reverse-sync.mjs --dry-run",
-    "dev": "pnpm sync && vitepress dev docs",
-    "build": "pnpm sync && vitepress build docs",
+    "sync": "node scripts/sync.mjs",
+    "dev": "node scripts/sync.mjs --forward && vitepress dev docs",
+    "build": "node scripts/sync.mjs --forward && vitepress build docs",
     "preview": "vitepress preview docs"
   },
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^25.7.0",
     "vitepress": "^1.6.4"
   }
 }

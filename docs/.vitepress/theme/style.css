@@ -73,3 +73,41 @@
   word-break: normal;
   overflow-wrap: normal;
 }
+
+/*
+ * 5) 네비바: 소셜 링크(GitHub·Discord)·다크모드 토글을 1280px 미만에서도
+ *    "…" 드롭다운 안에 숨기지 말고 인라인으로 보이게.
+ *
+ *    VitePress 기본은:
+ *      - .VPNavBarSocialLinks  → @media (min-width: 1280px) 부터 display:flex
+ *      - .VPNavBarAppearance   → @media (min-width: 1280px) 부터 display:flex
+ *      - .VPNavBarExtra ("…")  → 768~1279px 사이에 display:block
+ *    이걸 768px 부터 인라인으로 노출하도록 한 단계 당겼다.
+ *    (모바일에선 햄버거 메뉴가 따로 있으므로 768px 미만은 건드릴 필요 없음.)
+ *
+ *    scoped 속성 선택자(data-v-…)의 specificity(0,2,0)를 이기려고 클래스를
+ *    두 번 적었다 — !important 안 써도 됨.
+ */
+@media (min-width: 768px) {
+  .VPNavBarSocialLinks.VPNavBarSocialLinks {
+    display: flex;
+    align-items: center;
+  }
+  .VPNavBarAppearance.VPNavBarAppearance {
+    display: flex;
+    align-items: center;
+  }
+  .VPNavBarExtra.VPNavBarExtra {
+    display: none;
+  }
+}
+
+/*
+ * 6) 우측 "이 페이지에서" 아웃라인 패널 완전 제거.
+ *    config.ts 의 `outline: false` 만으론 "On this page" 라벨 + 빈 <ul> 컨테이너가
+ *    DOM 에 남아 우측 칼럼이 비어 보이거나 라벨만 동동 뜬다. VPDocAside 의 outline
+ *    하위 요소만 가리고, edit-link / lastUpdated 같은 다른 aside 요소는 유지.
+ */
+.VPDocAsideOutline {
+  display: none !important;
+}

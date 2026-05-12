@@ -1,0 +1,15 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# docs/guide/ 는 vault 미러 — 에디터가 자동 정리 못 하게 막음
+# (cosmetic reformat 으로 reverse-sync diff 가 노이즈투성이가 되는 거 방지)
+[docs/guide/**.md]
+insert_final_newline = unset
+trim_trailing_whitespace = false
