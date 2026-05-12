@@ -5,9 +5,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "sync": "node scripts/sync.mjs",
-    "dev": "node scripts/sync.mjs --forward && vitepress dev docs",
-    "build": "node scripts/sync.mjs --forward && vitepress build docs",
+    "sync": "node --env-file-if-exists=.env.local scripts/sync.mjs",
+    "dev": "node --env-file-if-exists=.env.local scripts/sync.mjs --forward && vitepress dev docs",
+    "build": "node --env-file-if-exists=.env.local scripts/sync.mjs --forward && vitepress build docs",
     "preview": "vitepress preview docs"
   },
   "license": "CC-BY-SA-4.0",

@@ -19,10 +19,13 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-const VAULT_ROOT = path.join(
-  process.env.HOME,
-  'Library/Mobile Documents/iCloud~md~obsidian/Documents/mannerism_notes/Personal/LocalLLM',
-);
+// vault 경로 노출 방지 — .env.local 의 OBSIDIAN_VAULT_ROOT 사용.
+// 이 스크립트는 일회성 마이그레이션이라 환경변수 없으면 즉시 종료.
+const VAULT_ROOT = process.env.OBSIDIAN_VAULT_ROOT;
+if (!VAULT_ROOT) {
+  console.error(`❌ OBSIDIAN_VAULT_ROOT 미설정 — .env.local 에 추가 후 다시 실행하세요.`);
+  process.exit(1);
+}
 
 const DRY_RUN = process.argv.includes('--dry-run');
 

@@ -24,10 +24,11 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 
-const VAULT_ROOT = path.join(
-  process.env.HOME,
-  'Library/Mobile Documents/iCloud~md~obsidian/Documents/mannerism_notes/Personal/LocalLLM',
-);
+// vault 경로는 절대 하드코딩하지 않음 — 메인테이너의 iCloud 경로·폴더 구조를
+// public repo 에 노출하지 않기 위함. .env.local 에 OBSIDIAN_VAULT_ROOT=... 형태.
+// package.json 의 sync/dev/build 스크립트가 `node --env-file-if-exists=.env.local`
+// 로 실행해서 자동 로드. 환경변수가 없으면 syncForward 에서 graceful skip.
+const VAULT_ROOT = process.env.OBSIDIAN_VAULT_ROOT;
 const DOCS_ROOT = path.join(REPO_ROOT, 'docs/guide');
 
 /**
@@ -112,19 +113,24 @@ async function showDiff(oldContent, newContent, rel) {
 
 async function syncForward() {
   console.log(`\n📤 obsidian → repo`);
-  console.log(`   from: ${VAULT_ROOT}`);
-  console.log(`   to:   ${DOCS_ROOT}\n`);
 
   // vault 없는 환경(Vercel·CI·기여자) 에선 sync 자체를 건너뛴다.
   // docs/guide/ 가 이미 repo 에 커밋돼 있으므로 그 상태로 빌드만 진행하면 됨.
-  // 메인테이너 로컬에서 vault 경로를 까먹은 케이스도 같은 경로로 처리되니까
-  // 메시지를 명확하게.
+  if (!VAULT_ROOT) {
+    console.log(`ℹ️  OBSIDIAN_VAULT_ROOT 미설정 — sync 건너뜀.`);
+    console.log(`    메인테이너: .env.local 파일에 OBSIDIAN_VAULT_ROOT=<vault 절대경로> 추가.`);
+    console.log(`    (예시는 .env.local.example 참고)`);
+    console.log(`    CI·Vercel·기여자 환경에서는 정상 — docs/guide/ 의 커밋된 상태로 빌드 진행.`);
+    return;
+  }
   if (!(await exists(VAULT_ROOT))) {
-    console.log(`ℹ️  vault 경로 없음 — sync 건너뜀 (CI·Vercel·기여자 환경에서는 정상).`);
-    console.log(`    찾던 경로: ${VAULT_ROOT}`);
+    console.log(`ℹ️  OBSIDIAN_VAULT_ROOT 가 가리키는 경로가 존재하지 않음 — sync 건너뜀.`);
+    console.log(`    설정된 값: ${VAULT_ROOT}`);
     console.log(`    docs/guide/ 의 커밋된 상태 그대로 빌드 진행.`);
     return;
   }
+  console.log(`   from: ${VAULT_ROOT}`);
+  console.log(`   to:   ${DOCS_ROOT}\n`);
   await fs.mkdir(DOCS_ROOT, { recursive: true });
 
   let copied = 0, deleted = 0, unchanged = 0, removedDirs = 0;
@@ -197,6 +203,11 @@ async function syncForward() {
 /* ─── reverse: docs/guide → vault (대화형 승인) ──────────────── */
 
 async function syncReverse() {
+  if (!VAULT_ROOT) {
+    console.error(`❌ OBSIDIAN_VAULT_ROOT 미설정 — reverse sync 는 vault 가 필수.`);
+    console.error(`    .env.local 파일에 OBSIDIAN_VAULT_ROOT=<vault 절대경로> 추가하세요.`);
+    process.exit(1);
+  }
   console.log(`\n📥 repo → obsidian (파일별 승인)`);
   console.log(`   from: ${DOCS_ROOT}`);
   console.log(`   to:   ${VAULT_ROOT}\n`);
