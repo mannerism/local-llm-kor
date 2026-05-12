@@ -1,0 +1,75 @@
+/*
+ * 한국어 본문용 타이포그래피 보정.
+ *
+ * VitePress 기본은 영문 기준 word-break: normal이라
+ * "맥북에서 로컬 LLM 굴리기" 같은 한·영 혼합 문장에서
+ * "굴리기"의 마지막 글자만 다음 줄로 떨어지는 고아 문자 문제가 생긴다.
+ *
+ * word-break: keep-all + overflow-wrap: break-word 조합이
+ * 한국어 단어 단위 줄바꿈의 사실상 표준 처방.
+ */
+
+:root {
+  /* 히어로 그라데이션 색상은 기본 인디고/바이올렛 유지.
+     필요하면 여기서 브랜드 색 갈음 가능. */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(
+    120deg,
+    #8b8cf6 30%,
+    #b794f6
+  );
+}
+
+/* 1) 홈 히어로 — name(보라 그라데이션) / text(흰색 큰 글자) / tagline. */
+.VPHero .name,
+.VPHero .text,
+.VPHero .tagline {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 히어로 텍스트가 너무 큰 한 줄짜리로 비어 보이지 않게 max-width 살짝 조이기. */
+.VPHero .main {
+  max-width: 640px;
+}
+
+.VPHero .tagline {
+  max-width: 560px;
+}
+
+/* 2) 홈 features 카드 — 제목·본문 모두 한국어 줄바꿈 적용. */
+.VPFeature .title,
+.VPFeature .details {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 3) 본문 페이지의 제목·문단·리스트도 동일 처리. */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4,
+.vp-doc p,
+.vp-doc li,
+.vp-doc blockquote,
+.vp-doc th,
+.vp-doc td {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 사이드바·아웃라인·내비도 한국어 줄바꿈. */
+.VPSidebarItem .text,
+.VPDocOutlineItem,
+.VPNavBarMenuLink,
+.VPNavScreenMenuLink {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 4) 코드 블록·인라인 코드는 영문 그대로(끊기지 않도록). */
+.vp-doc :not(pre) > code,
+.vp-doc pre code {
+  word-break: normal;
+  overflow-wrap: normal;
+}

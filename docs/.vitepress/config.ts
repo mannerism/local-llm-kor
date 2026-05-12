@@ -32,13 +32,6 @@ export default defineConfig({
             { text: '9편 — Qwen 35B A3B', link: '/guide/9-qwen-35b-a3b/' },
           ],
         },
-        {
-          text: '자료',
-          collapsed: false,
-          items: [
-            { text: '커뮤니티 리소스', link: '/guide/99-community-resources/' },
-          ],
-        },
       ],
     },
 

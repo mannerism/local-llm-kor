@@ -27,7 +27,7 @@
 
 ```sh
 pnpm install
-pnpm dev      # 옵시디언 vault에서 sync 후 VitePress dev 서버 띄우기
+pnpm dev      # content/ 를 docs/guide/ 로 변환 후 VitePress dev 서버
 ```
 
 ### 빌드
@@ -39,15 +39,26 @@ pnpm build    # docs/.vitepress/dist 에 정적 사이트 생성
 ### sync 만 따로
 
 ```sh
-pnpm sync     # ~/Library/Mobile Documents/.../LocalLLM 의 Obsidian vault → docs/guide/
+pnpm sync     # content/ → docs/guide/ 변환만 (dev 서버 안 띄움)
 ```
 
-## 콘텐츠 원본
+## 콘텐츠 구조
 
-이 저장소의 `docs/guide/` 는 별도 Obsidian vault에서 자동 변환됩니다.
-원본 위치: `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/mannerism_notes/Personal/LocalLLM/`
+이 저장소의 **`content/` 폴더가 모든 글의 단일 소스**입니다.
 
-외부 기여자는 vault 접근 없이 GitHub 쪽 마크다운만 수정해서 PR 주시면 됩니다. 머지 후 메인테이너가 vault에도 동기화합니다.
+```
+content/
+  1-사전-준비/
+    index.md            ← 챕터 흐름
+    primitives/*.md     ← 단일 도구 정본
+    assets/*.jpg        ← 이미지
+  2-llama-cpp-설치/
+  ...
+```
+
+- 메인테이너는 `content/` 폴더를 **Obsidian vault 로 직접 열어서** 편집
+- 외부 기여자는 **GitHub 웹 에디터로 같은 파일** 수정 → PR
+- `docs/guide/` 는 빌드 결과물 (`.gitignore` 됨, 직접 수정 X)
 
 ## 기여하기
 
@@ -62,7 +73,7 @@ pnpm sync     # ~/Library/Mobile Documents/.../LocalLLM 의 Obsidian vault → d
 | 영역 | 라이선스 |
 |---|---|
 | 코드 (`scripts/`, `.vitepress/`, 빌드 도구) | [MIT](./LICENSE) |
-| 본문·이미지 (`docs/**`) | [CC BY-SA 4.0](./LICENSE-CONTENT) |
+| 본문·이미지 (`content/**`) | [CC BY-SA 4.0](./LICENSE-CONTENT) |
 
 상업 출판·강의 패키지 등 별도 라이선스가 필요하시면 **dearmannerism@gmail.com**.
 

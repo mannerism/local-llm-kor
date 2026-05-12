@@ -1,7 +1,7 @@
 Documentation Content License
 =============================
 
-All documentation content in the `docs/` directory of this repository
+All documentation content in the `content/` directory of this repository
 (including but not limited to Markdown files, images, and other media assets)
 is licensed under the
 
@@ -37,7 +37,7 @@ Under the following terms:
 
 한국어 요약 (참고용, 법적 효력은 영문 원문 기준):
 
-본 저장소의 `docs/` 디렉토리에 있는 모든 문서·이미지는 CC BY-SA 4.0 라이선스로
+본 저장소의 `content/` 디렉토리에 있는 모든 문서·이미지는 CC BY-SA 4.0 라이선스로
 공개됩니다. 누구나 자유롭게 복사·재배포·번역·개작할 수 있으나, 다음 조건을
 지켜야 합니다:
 

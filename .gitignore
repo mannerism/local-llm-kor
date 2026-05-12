@@ -5,6 +5,15 @@ node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 
+# content/ → docs/guide/ 는 빌드 트랜스폼 결과물. 매 빌드마다 sync로 재생성됨.
+# 소스는 content/ 한 곳 (Obsidian vault). docs/guide/ 는 추적하지 않음.
+docs/guide/
+
+# Obsidian (content/ 를 vault로 열 때 생기는 작업용 메타데이터)
+content/.obsidian/workspace*
+content/.obsidian/cache
+content/.trash/
+
 # Editor / OS
 .idea/
 .vscode/
