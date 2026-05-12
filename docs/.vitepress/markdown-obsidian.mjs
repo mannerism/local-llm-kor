@@ -29,6 +29,16 @@ const nfc = (s) => s.normalize('NFC');
 const isImage = (name) => IMAGE_EXTS.has(path.extname(name).toLowerCase());
 
 /**
+ * 위키링크 target 은 외부 기여자 PR 에서 흘러들어올 수 있는 신뢰 X 입력.
+ * `..` 나 path separator 를 허용하면 빌드 시 `path.join(...)` 결과가 contentRoot
+ * 바깥으로 빠져나가 임의 파일을 readFileSync 로 읽힌다 (예: /etc/passwd,
+ * /proc/self/environ 으로 Vercel 빌드 env 노출).
+ * 정상 primitive/이미지 이름엔 `..` 와 `/` 가 들어갈 일이 없으므로 단순 거부.
+ */
+const isSafeEmbedName = (name) =>
+  !name.includes('..') && !name.includes('/') && !name.includes('\\');
+
+/**
  * contentRoot 아래의 모든 챕터를 훑어서 primitive 이름 → 챕터 맵 구축.
  * 크로스 챕터 위키링크 [[community-resources]] 같은 게 어느 챕터로 가야 할지 결정.
  */
@@ -103,6 +113,12 @@ function transform(md, { chapter, contentRoot, primitiveIndex, depth = 0 }) {
   // 1. ![[file]] 임베드 처리
   md = md.replace(/!\[\[([^\]]+)\]\]/g, (full, target) => {
     const name = nfc(target.trim());
+
+    // 신뢰 X 입력에 대한 첫 번째 게이트 — traversal 차단.
+    if (!isSafeEmbedName(name)) {
+      console.warn(`  ⚠️  unsafe embed name 거부: \`${name}\``);
+      return `\n> _⚠️ 위험한 임베드 이름: \`${name.replace(/[<>&]/g, '?')}\` — \`..\` 또는 \`/\` 는 허용되지 않습니다._\n`;
+    }
 
     // 이미지
     if (isImage(name)) {

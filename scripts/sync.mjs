@@ -115,9 +115,15 @@ async function syncForward() {
   console.log(`   from: ${VAULT_ROOT}`);
   console.log(`   to:   ${DOCS_ROOT}\n`);
 
+  // vault 없는 환경(Vercel·CI·기여자) 에선 sync 자체를 건너뛴다.
+  // docs/guide/ 가 이미 repo 에 커밋돼 있으므로 그 상태로 빌드만 진행하면 됨.
+  // 메인테이너 로컬에서 vault 경로를 까먹은 케이스도 같은 경로로 처리되니까
+  // 메시지를 명확하게.
   if (!(await exists(VAULT_ROOT))) {
-    console.error(`❌ vault 경로 없음: ${VAULT_ROOT}`);
-    process.exit(1);
+    console.log(`ℹ️  vault 경로 없음 — sync 건너뜀 (CI·Vercel·기여자 환경에서는 정상).`);
+    console.log(`    찾던 경로: ${VAULT_ROOT}`);
+    console.log(`    docs/guide/ 의 커밋된 상태 그대로 빌드 진행.`);
+    return;
   }
   await fs.mkdir(DOCS_ROOT, { recursive: true });
 

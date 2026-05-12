@@ -13,6 +13,12 @@ docs/.vitepress/dist/
 .vscode/
 *.log
 
+# Claude Code 세션·프로젝트 상태 — 실수로 push 되면 대화 내용 누출 가능
+.claude/
+
+# Vercel CLI link 결과 (project ID·org ID 보관) — 공개 repo 에 들어갈 이유 X
+.vercel/
+
 # Local env
 .env
 .env.local
