@@ -28,15 +28,15 @@ pnpm dev
 
 브라우저에서 미리보기 확인 후 PR.
 
-### 콘텐츠 원본은 `content/` 폴더
+### 어디를 수정하나요?
 
-이 저장소의 **`content/` 폴더가 모든 글의 단일 소스**입니다. 메인테이너는 그 폴더를 Obsidian vault로 열어서 작성하고, 외부 기여자는 GitHub 에디터로 같은 파일을 수정합니다. 즉:
+`docs/guide/N-슬러그/index.md` 를 수정해주세요. 페이지 안의 `<!-- SYNC:BEGIN ... -->` ··· `<!-- SYNC:END ... -->` 마커 사이의 본문이 진짜 콘텐츠입니다. 마커 자체는 건드리지 마세요.
 
-- `content/N-XXX/index.md` — 챕터 흐름
-- `content/N-XXX/primitives/도구.md` — 단일 도구 정본
-- `content/N-XXX/assets/` — 이미지
+- **오타·문장 수정**: 마커 사이 텍스트만 수정 → PR
+- **이미지 추가**: `docs/guide/N-슬러그/assets/` 에 파일 추가 + 마크다운에서 `![](./assets/파일.png)` 로 참조
+- **새 섹션·새 도구 추가**: issue 로 먼저 논의해주세요 (구조 변경은 메인테이너가 vault 에서 처리)
 
-`docs/guide/` 는 **빌드 결과물**(자동 생성)이라 git에 안 들어갑니다. 절대 직접 수정하지 마세요.
+> 💡 SYNC 마커는 HTML 코멘트라 렌더링된 사이트에선 안 보입니다. 마커 사이 본문을 머지하면 메인테이너가 `pnpm reverse-sync` 로 본인의 Obsidian vault 에 반영합니다.
 
 ## 3. 라이선스 및 기여자 동의 (중요)
 

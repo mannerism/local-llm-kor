@@ -6,6 +6,8 @@
   "private": true,
   "scripts": {
     "sync": "node scripts/sync-from-obsidian.mjs",
+    "reverse-sync": "node scripts/reverse-sync.mjs",
+    "reverse-sync:dry": "node scripts/reverse-sync.mjs --dry-run",
     "dev": "pnpm sync && vitepress dev docs",
     "build": "pnpm sync && vitepress build docs",
     "preview": "vitepress preview docs"

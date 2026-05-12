@@ -5,14 +5,8 @@ node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 
-# content/ → docs/guide/ 는 빌드 트랜스폼 결과물. 매 빌드마다 sync로 재생성됨.
-# 소스는 content/ 한 곳 (Obsidian vault). docs/guide/ 는 추적하지 않음.
-docs/guide/
-
-# Obsidian (content/ 를 vault로 열 때 생기는 작업용 메타데이터)
-content/.obsidian/workspace*
-content/.obsidian/cache
-content/.trash/
+# docs/guide/ 는 vault 에서 sync 된 결과물이지만, PR 기여자가 GitHub 에서
+# 수정할 수 있게 git tracked 됩니다. 직접 편집은 X — pnpm sync 가 덮어씁니다.
 
 # Editor / OS
 .idea/

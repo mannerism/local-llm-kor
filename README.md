@@ -2,7 +2,7 @@
 
 > **맥북에서 로컬 LLM 굴리기** — M4 Max 맥북으로 Claude Code 대용 로컬 LLM 환경을 만드는 한국어 입문 가이드.
 
-배포 사이트: *(준비 중 — Vercel)*
+배포 사이트: _(준비 중 — Vercel)_
 
 ## 무엇인가요?
 
@@ -27,38 +27,33 @@
 
 ```sh
 pnpm install
-pnpm dev      # content/ 를 docs/guide/ 로 변환 후 VitePress dev 서버
+pnpm dev               # vault → docs/guide/ 동기화 + VitePress dev 서버
+pnpm build             # 정적 빌드
+pnpm sync              # 동기화만 (dev 서버 X)
+pnpm reverse-sync      # PR 머지된 변경을 vault 로 역동기화 (대화형 승인)
+pnpm reverse-sync:dry  # 역동기화 미리보기 (vault 안 건드림)
 ```
 
-### 빌드
-
-```sh
-pnpm build    # docs/.vitepress/dist 에 정적 사이트 생성
-```
-
-### sync 만 따로
-
-```sh
-pnpm sync     # content/ → docs/guide/ 변환만 (dev 서버 안 띄움)
-```
-
-## 콘텐츠 구조
-
-이 저장소의 **`content/` 폴더가 모든 글의 단일 소스**입니다.
+## 콘텐츠 아키텍처
 
 ```
-content/
-  1-사전-준비/
-    index.md            ← 챕터 흐름
-    primitives/*.md     ← 단일 도구 정본
-    assets/*.jpg        ← 이미지
-  2-llama-cpp-설치/
-  ...
+┌──────────────────────┐    pnpm sync    ┌──────────────────┐    git push     ┌─────────┐
+│  Obsidian vault      │ ───────────────►│   docs/guide/    │ ───────────────►│ GitHub  │
+│  (iCloud, 메인테이너)│                  │  (SYNC 마커 박힘)│                 │  + PR   │
+│                      │ ◄───────────────│                  │ ◄───────────────│         │
+└──────────────────────┘ pnpm reverse-sync└──────────────────┘    PR 머지      └─────────┘
+                         (대화형 승인)
 ```
 
-- 메인테이너는 `content/` 폴더를 **Obsidian vault 로 직접 열어서** 편집
-- 외부 기여자는 **GitHub 웹 에디터로 같은 파일** 수정 → PR
-- `docs/guide/` 는 빌드 결과물 (`.gitignore` 됨, 직접 수정 X)
+**메인테이너 (vault → repo)**:
+
+- `~/Library/.../mannerism_notes/Personal/LocalLLM/` 의 Obsidian vault 에서 작성
+- `pnpm sync` 가 `docs/guide/` 로 변환·임베드 인라인·SYNC 마커 박음
+
+**기여자 (PR → vault)**:
+
+- GitHub 에서 `docs/guide/N-슬러그/index.md` 의 SYNC 마커 사이 본문 수정 → PR
+- 머지 후 메인테이너가 `pnpm reverse-sync` 실행 → 파일별 diff 확인 → 승인하면 vault 에 반영
 
 ## 기여하기
 
@@ -70,10 +65,10 @@ content/
 
 ## 라이선스
 
-| 영역 | 라이선스 |
-|---|---|
-| 코드 (`scripts/`, `.vitepress/`, 빌드 도구) | [MIT](./LICENSE) |
-| 본문·이미지 (`content/**`) | [CC BY-SA 4.0](./LICENSE-CONTENT) |
+| 영역                                        | 라이선스                          |
+| ------------------------------------------- | --------------------------------- |
+| 코드 (`scripts/`, `.vitepress/`, 빌드 도구) | [MIT](./LICENSE)                  |
+| 본문·이미지 (`docs/guide/**`)               | [CC BY-SA 4.0](./LICENSE-CONTENT) |
 
 상업 출판·강의 패키지 등 별도 라이선스가 필요하시면 **dearmannerism@gmail.com**.
 

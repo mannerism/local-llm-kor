@@ -1,23 +1,27 @@
 #!/usr/bin/env node
 /**
- * sync-from-content.mjs (a.k.a. sync-from-obsidian.mjs)
+ * sync-from-obsidian.mjs
  *
- * content/ → docs/guide/ 빌드 트랜스폼.
+ * Obsidian vault(iCloud) → repo docs/guide/ 트랜스폼.
+ * vault 가 단일 소스이고, docs/guide/ 는 동기화 결과물(but committed for PR editing).
  *
- * 입력 (repo 안 content/ — 옵시디언 vault 로 직접 열어서 편집):
- *   content/
+ * 입력 (iCloud Obsidian vault):
+ *   ~/Library/Mobile Documents/iCloud~md~obsidian/Documents/mannerism_notes/Personal/LocalLLM/
  *     1-사전-준비/
  *       index.md
  *       assets/*.jpg              ← 중첩 assets/assets/ 도 자동 평탄화
  *       primitives/*.md
  *     ...
  *
- * 출력 (VitePress docs — .gitignore 됨, 매 빌드마다 재생성):
+ * 출력 (VitePress docs — git tracked, PR 기여자가 GitHub에서 직접 수정):
  *   docs/guide/
  *     1-prep/
- *       index.md
+ *       index.md                  ← primitive 인라인 + HTML source 마커 박힘
  *       assets/*.jpg
  *     ...
+ *
+ * primitive 인라인 시 HTML 마커로 출처 표시 → scripts/reverse-sync.mjs 가 이걸 보고
+ * PR 머지된 변경을 vault primitive 파일로 역동기화함.
  *
  * 변환 규칙:
  *   - 한글 폴더명 → 영문 슬러그 (SLUG_MAP)
@@ -36,7 +40,10 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 
-const SOURCE_ROOT = path.join(REPO_ROOT, 'content');
+const SOURCE_ROOT = path.join(
+  process.env.HOME,
+  'Library/Mobile Documents/iCloud~md~obsidian/Documents/mannerism_notes/Personal/LocalLLM',
+);
 const DEST_ROOT = path.join(REPO_ROOT, 'docs/guide');
 
 const SLUG_MAP = {
@@ -168,8 +175,17 @@ function injectAnchorsForPrimitiveEmbeds(md) {
   return lines.join('\n');
 }
 
-/** 2) ![[primitive-name]] → primitive 본문 인라인 */
-async function inlinePrimitives(md, primitivesDir) {
+/**
+ * 2) ![[primitive-name]] → primitive 본문 인라인 + SYNC 마커.
+ *
+ * 마커 형식 (reverse-sync 가 이걸 보고 vault 로 역동기화):
+ *   <!-- SYNC:BEGIN src="<srcFolder>/primitives/<name>.md" demote="1" -->
+ *   ...본문(헤더 강등됨)...
+ *   <!-- SYNC:END   src="<srcFolder>/primitives/<name>.md" -->
+ *
+ * 마커는 HTML 코멘트라 렌더링된 페이지에선 안 보임. raw markdown 에만 존재.
+ */
+async function inlinePrimitives(md, primitivesDir, srcFolder) {
   const pattern = /!\[\[([^\]\/]+)\]\]/g;
   const replacements = [];
   let match;
@@ -183,7 +199,14 @@ async function inlinePrimitives(md, primitivesDir) {
       body = stripLeadingH1(body);
       body = demoteHeaders(body, 1);
       body = body.trim();
-      replacements.push({ start: match.index, end: match.index + match[0].length, body });
+
+      const srcPath = `${srcFolder}/primitives/${target}.md`;
+      const wrapped =
+        `<!-- SYNC:BEGIN src="${srcPath}" demote="1" -->\n` +
+        body +
+        `\n<!-- SYNC:END src="${srcPath}" -->`;
+
+      replacements.push({ start: match.index, end: match.index + match[0].length, body: wrapped });
     } else {
       console.warn(`  ⚠️  primitive 못 찾음: ${target} (in ${primitivesDir})`);
     }
@@ -359,9 +382,9 @@ async function syncChapter(srcFolder, slug, primitiveMap) {
   // 3. H2 에 primitive 앵커 주입
   md = injectAnchorsForPrimitiveEmbeds(md);
 
-  // 4. primitive 본문 인라인
+  // 4. primitive 본문 인라인 (SYNC 마커 박힘 → reverse-sync 가 사용)
   if (await exists(primitivesDir)) {
-    md = await inlinePrimitives(md, primitivesDir);
+    md = await inlinePrimitives(md, primitivesDir, srcFolder);
   }
 
   // 5. 이미지 임베드 변환
