@@ -1,0 +1,17 @@
+{
+  "name": "local-llm-guide",
+  "version": "0.1.0",
+  "description": "맥북에서 로컬 LLM 굴리기 — 한국어 입문 가이드",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "sync": "node scripts/sync-from-obsidian.mjs",
+    "dev": "pnpm sync && vitepress dev docs",
+    "build": "pnpm sync && vitepress build docs",
+    "preview": "vitepress preview docs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}

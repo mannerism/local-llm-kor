@@ -1,0 +1,15 @@
+node_modules/
+.DS_Store
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Editor / OS
+.idea/
+.vscode/
+*.log
+
+# Local env
+.env
+.env.local
