@@ -3,7 +3,7 @@
 > [[7-model-run/index|7편]]에서 Qwen 3.6 27B MTP를 daily driver로 정했어요. 이제 이 모델을 **Claude Code 대용**으로 굴릴 터미널 에이전트가 필요합니다. 후보를 잠깐 훑어 픽을 정하고, 그대로 설치·연결까지 갑니다.
 
 ## 사전 준비
-- [[7-model-run/index|7편]] 완료 (`localhost:8081`에서 llama-server 가동 중)
+- [[7-model-run/index|7편 llama.cpp 설치 + 27B 모델 다운로드 완료]] (`localhost:8081`에서 llama-server 가동 중)
 
 ---
 
@@ -61,10 +61,12 @@ Pi는 시작이 황량하지만, **TypeScript로 본인만의 에이전트를 �
 
 **터미널 A — llama-server**
 ```sh
-~/llama.cpp/build/bin/llama-server \
+llama-server \
   -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
-  --spec-type mtp --spec-draft-n-max 3 \
-  -np 1 -c 262144 \
+  --spec-type draft-mtp --spec-draft-n-max 3 \
+  --jinja \
+  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
+  -np 1 -c 131072 \
   --temp 0.7 --top-k 20 \
   -ngl 99 --port 8081
 ```

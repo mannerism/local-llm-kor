@@ -1,6 +1,6 @@
 ---
 tags: [reference, llm, performance, acceleration]
-last_updated: 2026-05-10
+last_updated: 2026-05-24
 ---
 
 # 추론 가속 기술
@@ -17,8 +17,10 @@ last_updated: 2026-05-10
 - **사용 조건**: 모델이 MTP 학습돼 있어야 함. 이름에 `MTP` 붙은 모델 받기
 
 ```sh
-llama-server -m model.gguf --spec-type mtp --spec-draft-n-max 3
+llama-server -m model.gguf --spec-type draft-mtp --spec-draft-n-max 3
 ```
+
+> llama.cpp `b9290+` (PR #22673 머지본)부터는 `--spec-type` 값이 `mtp` → **`draft-mtp`** 로 바뀌었어요. 옛 PR 빌드를 쓰던 사람은 [[pr-to-brew-migration]] 참고.
 
 **👍 장점**
 - 품질 손실 없음 (메인 모델이 검증함)
@@ -30,7 +32,7 @@ llama-server -m model.gguf --spec-type mtp --spec-draft-n-max 3
 - `--spec-draft-n-max`는 모델·양자화별로 다름. Qwen 3.6 27B에선 **3이 sweet spot** (저자 실측)
 - 비전(이미지) + MTP 조합 불안정 (2026-05 기준)
 - 추론 모델(R1 등)에선 효과 작음 (단거리 의존성만 잘 잡음)
-- llama.cpp 구현 미성숙 (PR 빌드 필요한 경우 있음)
+- llama.cpp의 옛 PR 빌드 절차는 master 머지(2026/5/16, brew `b9290+`)로 정리됨 — 자세한 건 [[llama-cpp-install]] 참고
 
 ## 2. Speculative Decoding
 
@@ -105,7 +107,7 @@ llama-server -m model.gguf --cache-type-k q8_0 --cache-type-v q8_0
 
 ```sh
 llama-server -m qwen3.6-27b-mtp.gguf \
-  --spec-type mtp \
+  --spec-type draft-mtp \
   --spec-draft-n-max 3 \
   -fa \
   --cache-type-k q8_0 --cache-type-v q8_0

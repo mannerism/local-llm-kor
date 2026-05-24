@@ -2,16 +2,25 @@
 
 > [[6-model-pick/index|6편]]에서 정한 모델을 실제로 띄워서 돌려봅니다. M4 Max에서 Qwen 3.6 27B + MTP가 daily driver로 쓸 만한지 토큰 속도를 측정합니다.
 
+> ⚠️ **2026/5/16 갱신**: 작성 당시 직접 빌드해야 했던 PR #22673이 **llama.cpp master에 머지**돼서 이제 `brew install llama.cpp` 한 줄이면 끝. 이 편도 brew 기준으로 갱신했습니다.
+>
+> - **이미 PR 빌드한 분** → [[pr-to-brew-migration|brew로 옮기기]]
+> - **옛 PR 빌드 절차 (역사·참고용)** → [[llama-cpp-pr-build]]
+
 ## 사전 준비
-- 1~6편 완료
-- mactop 설치 ([[5-model-speed/index|5편]])
+- [[1-prep/index|1편 WezTerm + Homebrew 설치하기 완료]]
+- [[2-llamacpp/index|2편 llama.cpp 설치하기 완료]]
+- [[3-llama-cpp-vs-mlx/index|3편 llama.cpp vs MLX 비교하기 완료]]
+- [[4-model-name/index|4편 모델 이름 이해하기 완료]]
+- [[5-model-speed/index|5편 모델 속도 결정 요인 익히기 완료]] — mactop도 여기서 설치
+- [[6-model-pick/index|6편 Qwen 3.6 27B MTP 모델 선정하기 완료]]
 
 ---
 
 ## 실험 흐름
 
 ```
-1. llama.cpp PR #22673 빌드 (MTP 지원)
+1. llama.cpp 설치 (brew)
 2. 모델 다운로드 (Q8_0 MTP)
 3. MTP 실행 + 측정
 4. 결과 정리 → 가설 검증
@@ -19,12 +28,9 @@
 
 ---
 
-## 1. llama.cpp PR 빌드
+## 1. llama.cpp 설치
 
-### 왜 또 빌드?
-[[2-llamacpp/index|2편]]의 brew llama.cpp는 **stable(안정) 버전**이라 MTP 지원 코드가 아직 없어요. MTP 지원은 **PR #22673**라는 pull request에 들어있는데, 2026-05-10 시점에 아직 머지 안 된 **draft** 상태예요. 사전 PR 두 개(#22787, #22838)가 먼저 끝나야 머지 가능. 그때까진 직접 그 브랜치를 빌드해서 써야 해요.
-
-![[llama-cpp-pr-build]]
+![[llama-cpp-install]]
 
 ---
 ## 2. 모델 다운로드

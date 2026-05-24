@@ -3,8 +3,9 @@
 > Hugging Face나 r/LocalLLaMA에서 모델을 골라 받기 전에, 이름만 보고 "어떤 모델인지" 파악할 수 있어야 해요. 이 편에서는 모델 이름을 읽는 법을 기본부터 응용까지 다룹니다.
 
 ## 사전 준비
-- [[1-prep/index|1편]](사전 준비), [[2-llamacpp/index|2편]](llama.cpp 설치) 완료
-- [[3-llama-cpp-vs-mlx/index|3편]](llama.cpp vs MLX 비교)에서 llama.cpp를 메인으로 가기로 결정
+- [[1-prep/index|1편 WezTerm + Homebrew 설치하기 완료]]
+- [[2-llamacpp/index|2편 llama.cpp 설치하기 완료]]
+- [[3-llama-cpp-vs-mlx/index|3편 llama.cpp vs MLX 비교하기 완료]] — llama.cpp를 메인으로 가기로 결정
 
 ---
 

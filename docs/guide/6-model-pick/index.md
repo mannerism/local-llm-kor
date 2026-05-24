@@ -1,10 +1,13 @@
 # 모델 선택 — Qwen 3.6 27B MTP (6편)
 
-> [[4-model-name/index|4편]](모델 이름)과 [[5-model-speed/index|5편]](속도 결정 요인)에서 배운 걸로 이 시리즈에서 쓸 모델을 정합니다. 결론은 **Qwen 3.6 27B MTP**.
+> [[4-model-name/index|4편 모델 이름 이해하기]]와 [[5-model-speed/index|5편 모델 속도 결정 요인 익히기]]에서 배운 걸로 이 시리즈에서 쓸 모델을 정합니다. 결론은 **Qwen 3.6 27B MTP**.
 
 ## 사전 준비
-- 1~5편 완료
-- 특히 [[5-model-speed/index|5편]]의 메모리 대역폭·속도 공식 이해 중요
+- [[1-prep/index|1편 WezTerm + Homebrew 설치하기 완료]]
+- [[2-llamacpp/index|2편 llama.cpp 설치하기 완료]]
+- [[3-llama-cpp-vs-mlx/index|3편 llama.cpp vs MLX 비교하기 완료]]
+- [[4-model-name/index|4편 모델 이름 이해하기 완료]]
+- [[5-model-speed/index|5편 모델 속도 결정 요인 익히기 완료]] — 특히 메모리 대역폭·속도 공식
 
 ---
 

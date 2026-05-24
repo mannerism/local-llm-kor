@@ -1,6 +1,6 @@
 ---
 tags: [reference, llm, llama.cpp, benchmark]
-last_updated: 2026-05-10
+last_updated: 2026-05-24
 ---
 
 # 모델 시험 해보기
@@ -10,26 +10,26 @@ last_updated: 2026-05-10
 
 ## 준비물
 
-- llama.cpp 설치 (brew 또는 [[llama-cpp-pr-build|PR 빌드]])
+- llama.cpp 설치 ([[llama-cpp-install|brew 설치]])
 - GGUF 모델 파일 (다운받은 위치)
+- Fixed Chat Template (`~/models/qwen3.6-templates/chat_template.jinja`)
 
 ## 3개 터미널로 진행
 
 ### 터미널 A — llama-server 띄우기
 
 ```sh
-~/llama.cpp/build/bin/llama-server \
+llama-server \
   -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
-  --spec-type mtp --spec-draft-n-max 3 \
-  -np 1 -c 262144 \
+  --spec-type draft-mtp --spec-draft-n-max 3 \
+  --jinja \
+  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
+  -np 1 -c 131072 \
   --temp 0.7 --top-k 20 \
-  -ngl 99 \
-  --port 8081
+  -ngl 99 --port 8081
 ```
 
 플래그 의미는 [[inference-flags]]·[[acceleration]] 참고.
-
-> 💡 PR 빌드본은 **절대경로**(`~/llama.cpp/build/bin/llama-server`)로 호출해서 brew 거랑 충돌 안 함.
 
 모델 로딩 1~2분 후 `server is listening on port 8081` 메시지 뜨면 준비 완료.
 

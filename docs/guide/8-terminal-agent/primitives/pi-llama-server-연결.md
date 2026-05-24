@@ -31,7 +31,7 @@ cat > ~/.pi/agent/models.json <<'EOF'
           "name": "Qwen 3.6 27B MTP (Local)",
           "reasoning": false,
           "input": ["text"],
-          "contextWindow": 262144,
+          "contextWindow": 131072,
           "maxTokens": 32000,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }
@@ -67,10 +67,12 @@ cat ~/.pi/agent/models.json
 새 터미널을 하나 열고 다음 명령어를 실행하세요. 이 창은 **닫지 말고 그대로 두세요.**
 
 ```sh
-~/llama.cpp/build/bin/llama-server \
+llama-server \
   -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
-  --spec-type mtp --spec-draft-n-max 3 \
-  -np 1 -c 262144 \
+  --spec-type draft-mtp --spec-draft-n-max 3 \
+  --jinja \
+  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
+  -np 1 -c 131072 \
   --temp 0.7 --top-k 20 \
   -ngl 99 --port 8081
 ```

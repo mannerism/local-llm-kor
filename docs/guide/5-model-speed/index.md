@@ -3,7 +3,10 @@
 > 로컬 LLM이 빠를지 느릴지는 칩 세대보다 메모리 스펙·소프트웨어 설정이 결정해요. 이 편에서는 **속도를 결정짓는 요인들을 하나씩** 자세히 봅니다.
 
 ## 사전 준비
-- [[1-prep/index|1편]](사전 준비), [[2-llamacpp/index|2편]](llama.cpp 설치), [[3-llama-cpp-vs-mlx/index|3편]](엔진 비교), [[4-model-name/index|4편]](모델 이름) 완료
+- [[1-prep/index|1편 WezTerm + Homebrew 설치하기 완료]]
+- [[2-llamacpp/index|2편 llama.cpp 설치하기 완료]]
+- [[3-llama-cpp-vs-mlx/index|3편 llama.cpp vs MLX 비교하기 완료]]
+- [[4-model-name/index|4편 모델 이름 이해하기 완료]]
 
 ---
 

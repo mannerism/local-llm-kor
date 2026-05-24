@@ -3,8 +3,8 @@
 > [[8-terminal-agent/index|8편]]까지 Qwen 3.6 27B를 daily driver로 셋업하고 Fixed Template까지 적용해서 23 tok/s 회복했어요. 이번 편에서는 **35B A3B 모델을 추가**해 **듀얼 모델 운영**으로 갑니다. 작업 난이도에 따라 27B(품질)와 35B A3B(속도)를 골라 쓰는 전략이에요.
 
 ## 사전 준비
-- [[8-terminal-agent/index|8편]] 완료 (Pi + 27B 셋업 + Fixed Template)
-- llama.cpp PR #22673 빌드 완료 ([[7-model-run/index|7편]]) — 새로 빌드할 필요 없어요
+- [[7-model-run/index|7편 llama.cpp 설치 + 27B 모델 다운로드 완료]] — 이제 brew `b9290+`로 충분
+- [[8-terminal-agent/index|8편 Pi 셋업 + Fixed Template 적용하기 완료]]
 - 디스크 여유 30~40 GB
 
 ---
@@ -64,7 +64,7 @@ MTP(speculative decoding)는 27B Dense에서 2.5배 가속을 줬지만, **MoE�
 
 이유: MoE는 이미 active 3.6B만 계산하니까 기본 속도가 빠르고, draft 검증의 상대적 비용이 더 커져요.
 
-→ 그래도 우리가 받은 havenoammo의 MTP-GGUF는 MTP가 박혀 있어서 켜 두는 게 손해는 아닙니다. 효과 측정해 보고 별 차이 없으면 `--spec-type mtp --spec-draft-n-max 3`를 빼도 됩니다.
+→ 그래도 우리가 받은 havenoammo의 MTP-GGUF는 MTP가 박혀 있어서 켜 두는 게 손해는 아닙니다. 효과 측정해 보고 별 차이 없으면 `--spec-type draft-mtp --spec-draft-n-max 3`를 빼도 됩니다.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 tags: [tool, deployment, multi-model]
-last_updated: 2026-05-12
+last_updated: 2026-05-24
 ---
 
 # 듀얼 모델 운영 (27B + 35B A3B)
@@ -11,7 +11,7 @@ last_updated: 2026-05-12
 
 - **포트 분리** — llama-server 한 프로세스는 한 모델만 로드 가능. 두 모델을 동시에 띄우려면 서로 다른 포트가 필요해요. 8081(27B)·8082(35B)로 가요.
 - **Pi 멀티 provider** — Pi `models.json`은 여러 provider를 등록할 수 있고, `/model`로 세션 안에서 즉시 전환됩니다. 재시작·재로드 없음.
-- **컨텍스트 비대칭** — 27B는 깊은 작업용이라 큰 컨텍스트(`262144` = 256K)가 의미 있지만, 35B A3B는 빠른 일상 작업용이라 `65536` = 64K로 충분. KV cache 메모리도 절약됩니다.
+- **컨텍스트 비대칭** — 27B는 깊은 작업용이라 큰 컨텍스트(`131072` = 128K)를 잡고, 35B A3B는 빠른 일상 작업용이라 `65536` = 64K로 시작. 27B에 256K(`-c 262144`)는 듀얼 운영 중엔 Metal compute 에러가 날 수 있어요. 큰 컨텍스트가 필요하면 35B 서버를 잠시 끄고 27B만 256K로 띄우세요.
 
 ## 구조
 
@@ -39,12 +39,12 @@ sudo sysctl iogpu.wired_limit_mb=114688
 8편 마지막의 최적 명령어. 이미 도는 중이면 건드릴 필요 없어요.
 
 ```sh
-~/llama.cpp/build/bin/llama-server \
+llama-server \
   -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
-  --spec-type mtp --spec-draft-n-max 3 \
+  --spec-type draft-mtp --spec-draft-n-max 3 \
   --jinja \
-  --chat-template-file ~/llama.cpp/templates/qwen3.6/chat_template.jinja \
-  -np 1 -c 262144 \
+  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
+  -np 1 -c 131072 \
   --temp 0.7 --top-k 20 \
   -ngl 99 --port 8081
 ```
@@ -56,11 +56,11 @@ sudo sysctl iogpu.wired_limit_mb=114688
 ## 2. 35B A3B를 port 8082에 (새 터미널)
 
 ```sh
-~/llama.cpp/build/bin/llama-server \
+llama-server \
   -m ~/models/qwen3.6-35b-a3b-mtp/Qwen3.6-35B-A3B-MTP-UD-Q8_K_XL.gguf \
-  --spec-type mtp --spec-draft-n-max 3 \
+  --spec-type draft-mtp --spec-draft-n-max 3 \
   --jinja \
-  --chat-template-file ~/llama.cpp/templates/qwen3.6/chat_template.jinja \
+  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
   -np 1 -c 65536 \
   --temp 0.7 --top-k 20 \
   -ngl 99 --port 8082
@@ -99,7 +99,7 @@ Dense 모델인 27B는 매 토큰마다 전체 가중치를 다 만지니까 한
 
 **3. KV cache가 작게 잡혀 있음**
 
-35B A3B는 `-c 65536` (64K)로 띄웠어요. 27B의 256K보다 1/4이라 KV cache 메모리도 그만큼 작아요.
+35B A3B는 `-c 65536` (64K)로 띄웠어요. 27B의 128K보다 1/2이라 KV cache 메모리도 그만큼 작아요.
 
 ### 실제로 어떻게 변할까
 
@@ -123,7 +123,7 @@ cat > ~/.pi/agent/models.json <<'EOF'
           "name": "Qwen 3.6 27B (Quality)",
           "reasoning": false,
           "input": ["text"],
-          "contextWindow": 262144,
+          "contextWindow": 131072,
           "maxTokens": 32000,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }
@@ -209,11 +209,11 @@ Pi 세션 안에서:
 **2) 새 명령어로 재시작 (`-c 65536` → `-c 131072`만 변경):**
 
 ```sh
-~/llama.cpp/build/bin/llama-server \
+llama-server \
   -m ~/models/qwen3.6-35b-a3b-mtp/Qwen3.6-35B-A3B-MTP-UD-Q8_K_XL.gguf \
-  --spec-type mtp --spec-draft-n-max 3 \
+  --spec-type draft-mtp --spec-draft-n-max 3 \
   --jinja \
-  --chat-template-file ~/llama.cpp/templates/qwen3.6/chat_template.jinja \
+  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
   -np 1 -c 131072 \
   --temp 0.7 --top-k 20 \
   -ngl 99 --port 8082
@@ -235,7 +235,7 @@ cat > ~/.pi/agent/models.json <<'EOF'
           "name": "Qwen 3.6 27B (Quality)",
           "reasoning": false,
           "input": ["text"],
-          "contextWindow": 262144,
+          "contextWindow": 131072,
           "maxTokens": 32000,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }

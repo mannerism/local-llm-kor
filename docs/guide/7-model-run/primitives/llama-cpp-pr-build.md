@@ -1,9 +1,16 @@
 ---
-tags: [reference, llama.cpp, build]
-last_updated: 2026-05-10
+tags: [reference, llama.cpp, build, legacy]
+last_updated: 2026-05-24
 ---
 
-# llama.cpp PR 브랜치 빌드
+# llama.cpp PR 브랜치 빌드 (참고용 — 이제 brew로 충분)
+
+> ⚠️ **이 문서는 2026년 5월 16일 이전 절차입니다.**
+> PR #22673(MTP)가 master에 머지돼서 brew 빌드(`b9290+`)에 포함됐어요. **새로 시작하는 분은 [[llama-cpp-install|brew 설치 가이드]]를 따라가세요.**
+>
+> 이미 이 절차로 PR 빌드해 두신 분은 [[pr-to-brew-migration|brew로 옮기기]] 문서로 정리할 수 있습니다.
+>
+> 아래 내용은 **다른 PR 브랜치를 직접 빌드해야 하는 일반적인 상황** 또는 **시리즈를 따라온 기록**으로 보존합니다.
 
 ## 이게 뭐예요?
 **llama.cpp의 stable(brew) 버전엔 아직 들어가지 않은 신기능**(예: MTP, 새 모델 지원)을 쓰고 싶을 때, 그 기능이 들어있는 pull request 브랜치를 직접 빌드하는 방법이에요.
