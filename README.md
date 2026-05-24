@@ -2,7 +2,7 @@
 
 > **맥북에서 로컬 LLM 굴리기** — M4 Max 맥북으로 Claude Code 대용 로컬 LLM 환경을 만드는 한국어 입문 가이드.
 
-📖 **사이트**: _배포 준비 중 (Vercel)_
+📖 **사이트**: <https://local-llm-kor.vercel.app/>
 
 ---
 
@@ -46,7 +46,7 @@ PR 제출 시 [기여자 라이선스 동의(CLA)](./CONTRIBUTING.md#3-라이선
 ## 만들어진 도구
 
 - 사이트: [VitePress](https://vitepress.dev/) (Vue 기반 정적 사이트 생성기)
-- 호스팅: Vercel (예정)
+- 호스팅: [Vercel](https://local-llm-kor.vercel.app/)
 - 본문 소스: 메인테이너의 Obsidian vault → `scripts/sync.mjs` 로 `docs/guide/` 에 미러링
 
 > 메인테이너가 vault 에서 글을 쓰고 `pnpm sync --forward` 로 repo 에 반영합니다. PR 로 들어온 기여는 `pnpm sync --reverse` 로 파일별 승인 후 vault 에 역동기화돼요. 자세한 흐름은 [CONTRIBUTING.md](./CONTRIBUTING.md) 의 "콘텐츠 흐름" 섹션 참고.

@@ -5,7 +5,7 @@
 > ⚠️ **2026/5/16 갱신**: 작성 당시 직접 빌드해야 했던 PR #22673이 **llama.cpp master에 머지**돼서 이제 `brew install llama.cpp` 한 줄이면 끝. 이 편도 brew 기준으로 갱신했습니다.
 >
 > - **이미 PR 빌드한 분** → [[99-appendix/index#brew로-옮기기|brew로 옮기기]]
-> - **옛 PR 빌드 절차 (역사·참고용)** → [[99-appendix/index#옛-pr-빌드-절차-참고용|옛 PR 빌드 절차]]
+> - **옛 PR 빌드 절차 (기록용)** → [[99-appendix/index#옛-pr-빌드-절차-참고용|옛 PR 빌드 절차]]
 
 ## 사전 준비
 - [[1-prep/index|1편 WezTerm + Homebrew 설치하기 완료]]
