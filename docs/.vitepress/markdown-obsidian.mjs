@@ -41,34 +41,54 @@ const isSafeEmbedName = (name) =>
 /**
  * contentRoot 아래의 모든 챕터를 훑어서 primitive 이름 → 챕터 맵 구축.
  * 크로스 챕터 위키링크 [[community-resources]] 같은 게 어느 챕터로 가야 할지 결정.
+ *
+ * 다중 시리즈 구조: contentRoot/<series>/<chapter>/primitives/*.md.
+ * 맵 값은 `series/chapter` 상대경로 (URL `/guide/series/chapter/` + path.join 둘 다에 사용).
  */
-function buildPrimitiveIndex(contentRoot) {
+export function buildPrimitiveIndex(contentRoot) {
+  // name → ['series/chapter', ...]. 등록 순서 = 시리즈·챕터 사전순 (결정적).
   const index = new Map();
   if (!existsSync(contentRoot)) return index;
-  for (const entry of readdirSync(contentRoot)) {
-    const chapterDir = path.join(contentRoot, entry);
-    if (!statSync(chapterDir).isDirectory()) continue;
-    const primitivesDir = path.join(chapterDir, 'primitives');
-    if (!existsSync(primitivesDir)) continue;
-    for (const file of readdirSync(primitivesDir)) {
-      if (file.endsWith('.md')) {
-        const name = nfc(file.replace(/\.md$/, ''));
-        if (!index.has(name)) index.set(name, entry);
+  for (const series of readdirSync(contentRoot).sort()) {
+    const seriesDir = path.join(contentRoot, series);
+    if (!statSync(seriesDir).isDirectory()) continue;
+    for (const chapter of readdirSync(seriesDir).sort()) {
+      const chapterDir = path.join(seriesDir, chapter);
+      if (!statSync(chapterDir).isDirectory()) continue;
+      const primitivesDir = path.join(chapterDir, 'primitives');
+      if (!existsSync(primitivesDir)) continue;
+      for (const file of readdirSync(primitivesDir).sort()) {
+        if (file.endsWith('.md')) {
+          const name = nfc(file.replace(/\.md$/, ''));
+          const rel = `${nfc(series)}/${nfc(chapter)}`;
+          const list = index.get(name) ?? [];
+          if (!list.includes(rel)) list.push(rel);
+          index.set(name, list);
+        }
       }
+    }
+  }
+  // 같은 이름 primitive 가 여러 시리즈에 걸쳐 있으면 경고 — 해석은 '같은 시리즈 우선'.
+  for (const [name, rels] of index) {
+    const seriesSet = new Set(rels.map((r) => r.split('/')[0]));
+    if (seriesSet.size > 1) {
+      console.warn(`  ⚠️  primitive 이름 충돌(여러 시리즈): \`${name}\` → ${rels.join(', ')} — 같은 시리즈 우선 해석`);
     }
   }
   return index;
 }
 
 /**
- * 현재 페이지가 어느 챕터에 속하는지 추정.
- * VitePress 가 처리하는 파일 경로는 `docs/guide/<chapter>/index.md` 같은 형태.
+ * 현재 페이지가 어느 (시리즈/챕터) 에 속하는지 추정.
+ * VitePress 가 처리하는 파일 경로는 `docs/guide/<series>/<chapter>/index.md` 형태.
+ * 반환: `series/chapter` 상대경로 (앞 두 세그먼트), 못 구하면 null.
  */
-function chapterFromEnv(env, contentRoot) {
+export function chapterRelFromEnv(env, contentRoot) {
   if (!env || !env.path) return null;
   const rel = path.relative(contentRoot, env.path);
   const parts = rel.split(path.sep);
-  return parts[0] || null;
+  if (parts.length < 2) return null;
+  return `${parts[0]}/${parts[1]}`;
 }
 
 function stripFrontmatter(md) {
@@ -107,8 +127,11 @@ function demoteHeaders(md, by = 1) {
  * 한 페이지의 마크다운 소스에 Obsidian 문법 변환을 적용.
  * primitive 임베드는 재귀적으로 inline (primitive 안에 또 ![[]] 있으면 그것도 처리).
  */
-function transform(md, { chapter, contentRoot, primitiveIndex, depth = 0 }) {
+export function transform(md, { chapterRel, contentRoot, primitiveIndex, depth = 0 }) {
   if (depth > 3) return md; // 무한 재귀 방지
+
+  // 현재 페이지의 시리즈 (chapterRel = `series/chapter`). 크로스 챕터 링크 prefix 용.
+  const series = chapterRel ? chapterRel.split('/')[0] : null;
 
   // 1. ![[file]] 임베드 처리
   md = md.replace(/!\[\[([^\]]+)\]\]/g, (full, target) => {
@@ -126,18 +149,18 @@ function transform(md, { chapter, contentRoot, primitiveIndex, depth = 0 }) {
     }
 
     // primitive 인라인 — 같은 챕터 안에서만 (Obsidian 도 보통 그렇게 씀)
-    if (!chapter) return full;
-    const primitivePath = path.join(contentRoot, chapter, 'primitives', `${name}.md`);
+    if (!chapterRel) return full;
+    const primitivePath = path.join(contentRoot, chapterRel, 'primitives', `${name}.md`);
     try {
       let body = readFileSync(primitivePath, 'utf8');
       body = stripFrontmatter(body);
       body = stripLeadingH1(body);
-      body = transform(body, { chapter, contentRoot, primitiveIndex, depth: depth + 1 });
+      body = transform(body, { chapterRel, contentRoot, primitiveIndex, depth: depth + 1 });
       body = demoteHeaders(body, 1);
       // anchor span 주입 — 다른 페이지에서 [[primitive-name]] 으로 링크 걸 수 있게
       return `<span id="${name}"></span>\n\n${body.trim()}`;
     } catch {
-      return `\n> _⚠️ primitive 못 찾음: \`${name}\` — \`${chapter}/primitives/${name}.md\`_\n`;
+      return `\n> _⚠️ primitive 못 찾음: \`${name}\` — \`${chapterRel}/primitives/${name}.md\`_\n`;
     }
   });
 
@@ -147,20 +170,25 @@ function transform(md, { chapter, contentRoot, primitiveIndex, depth = 0 }) {
     const tgt = nfc(target.trim());
 
     // 2a. 크로스 챕터 인덱스 [[N-folder/index]] 또는 [[N-folder/index#anchor]]
+    // 같은 시리즈 안의 다른 챕터를 가리킴 → 현재 시리즈를 prefix 로 붙인다.
     const cross = tgt.match(/^([^/]+)\/index(?:#(.+))?$/);
     if (cross) {
       const [, folder, anchor] = cross;
       const hash = anchor ? `#${anchor}` : '';
-      return `[${display}](/guide/${folder}/${hash})`;
+      const base = series ? `/guide/${series}/${folder}/` : `/guide/${folder}/`;
+      return `[${display}](${base}${hash})`;
     }
 
-    // 2b. primitive 글로벌 매핑 — 같은 챕터면 anchor, 다른 챕터면 풀 경로
-    const primitiveChapter = primitiveIndex.get(tgt);
-    if (primitiveChapter) {
-      if (primitiveChapter === chapter) {
+    // 2b. primitive 매핑 — 같은 챕터면 anchor, 아니면 풀 경로 (series/chapter).
+    // 같은 이름이 여러 시리즈에 있으면 현재 시리즈를 우선, 없으면 사전순 첫 후보.
+    const candidates = primitiveIndex.get(tgt);
+    if (candidates && candidates.length > 0) {
+      const sameSeries = series ? candidates.find((rel) => rel.startsWith(`${series}/`)) : undefined;
+      const chosen = sameSeries ?? candidates[0];
+      if (chosen === chapterRel) {
         return `[${display}](#${tgt})`;
       }
-      return `[${display}](/guide/${primitiveChapter}/#${tgt})`;
+      return `[${display}](/guide/${chosen}/#${tgt})`;
     }
 
     // 2c. 못 찾음 — anchor 로만 변환 (페이지 내 헤더와 일치하면 작동, 아니면 깨진 링크)
@@ -175,8 +203,8 @@ export function obsidianPlugin(md, options = {}) {
   const primitiveIndex = buildPrimitiveIndex(contentRoot);
 
   md.core.ruler.before('normalize', 'obsidian-transform', (state) => {
-    const chapter = chapterFromEnv(state.env, contentRoot);
-    state.src = transform(state.src, { chapter, contentRoot, primitiveIndex });
+    const chapterRel = chapterRelFromEnv(state.env, contentRoot);
+    state.src = transform(state.src, { chapterRel, contentRoot, primitiveIndex });
   });
 }
 

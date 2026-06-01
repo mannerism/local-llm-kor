@@ -6,6 +6,7 @@
  *
  *   pnpm sync          # 방향 묻고 진행
  *   pnpm sync --forward   # vault → docs/guide (자동, 빌드용)
+ *   pnpm sync --forward --force   # 시리즈 통째 삭제까지 허용 (기본은 보호)
  *   pnpm sync --reverse   # docs/guide → vault (파일별 diff 승인)
  *
  * 방향:
@@ -19,7 +20,7 @@ import { promises as fs } from 'node:fs';
 import readline from 'node:readline/promises';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -41,7 +42,7 @@ const DOCS_ROOT = path.join(REPO_ROOT, 'docs/guide');
  *   - vault 에서 챕터 지우면 다음 sync 에 repo 에서도 제거
  *   - 비-챕터 부산물(`assets/`, `templates/` 등 숫자 접두 없는 폴더)은 자연 제외
  */
-async function discoverChapters(root) {
+export async function discoverChapters(root) {
   if (!(await exists(root))) return [];
   const entries = await fs.readdir(root, { withFileTypes: true });
   return entries
@@ -58,13 +59,16 @@ const args = process.argv.slice(2);
 const FORCE_FORWARD = args.includes('--forward');
 const FORCE_REVERSE = args.includes('--reverse');
 const AUTO_YES = args.includes('--yes') || args.includes('-y');
+// 시리즈 통째 삭제 허용 플래그. 기본(false)이면 vault 에 없는 시리즈를 지우지 않고
+// 보류한다 — iCloud 부분 동기화/잘못된 경로로 인한 대량 삭제 방지.
+const FORCE_WIPE = args.includes('--force');
 
 /* ─── 유틸 ────────────────────────────────────────────────────── */
 
 const exists = async (p) => fs.access(p).then(() => true).catch(() => false);
 const nfc = (s) => s.normalize('NFC');
 
-async function listFilesRel(rootDir, baseDir = rootDir, files = []) {
+export async function listFilesRel(rootDir, baseDir = rootDir, files = []) {
   if (!(await exists(rootDir))) return files;
   const entries = await fs.readdir(rootDir, { withFileTypes: true });
   for (const entry of entries) {
@@ -109,53 +113,116 @@ async function showDiff(oldContent, newContent, rel) {
   }
 }
 
+/* ─── 시리즈 발견 (루트 직속 서브디렉토리) ───────────────────────
+ *
+ * 다중 시리즈 구조: <root>/<series>/<N-챕터>/...
+ *   - series : 루트 직속 서브디렉토리 (dotfolder 제외). 예: local-llm-0-to-1
+ *   - chapter: 시리즈 안의 `^\d+-` 폴더 (discoverChapters 그대로 재사용)
+ * 시리즈 이름엔 숫자 접두 규칙이 없으므로 단순 사전순 정렬.
+ */
+export async function discoverSeries(root) {
+  if (!(await exists(root))) return [];
+  const entries = await fs.readdir(root, { withFileTypes: true });
+  return entries
+    .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+    .map((e) => nfc(e.name))
+    .sort((a, b) => a.localeCompare(b));
+}
+
+// 챕터 합집합 — 숫자 접두 오름차순 (1,2,...,9,10,99), 같으면 이름순.
+function unionChapters(a, b) {
+  return [...new Set([...a, ...b])].sort((x, y) => {
+    const nx = parseInt(x, 10);
+    const ny = parseInt(y, 10);
+    return nx !== ny ? nx - ny : x.localeCompare(y);
+  });
+}
+
+// 시리즈 합집합 — 사전순.
+function unionSeries(a, b) {
+  return [...new Set([...a, ...b])].sort((x, y) => x.localeCompare(y));
+}
+
 /* ─── forward: vault → docs/guide (자동, 빌드용) ─────────────── */
 
-async function syncForward() {
+export async function syncForward({ vaultRoot = VAULT_ROOT, docsRoot = DOCS_ROOT, force = FORCE_WIPE } = {}) {
   console.log(`\n📤 obsidian → repo`);
 
   // vault 없는 환경(Vercel·CI·기여자) 에선 sync 자체를 건너뛴다.
   // docs/guide/ 가 이미 repo 에 커밋돼 있으므로 그 상태로 빌드만 진행하면 됨.
-  if (!VAULT_ROOT) {
+  if (!vaultRoot) {
     console.log(`ℹ️  OBSIDIAN_VAULT_ROOT 미설정 — sync 건너뜀.`);
     console.log(`    메인테이너: .env.local 파일에 OBSIDIAN_VAULT_ROOT=<vault 절대경로> 추가.`);
     console.log(`    (예시는 .env.local.example 참고)`);
     console.log(`    CI·Vercel·기여자 환경에서는 정상 — docs/guide/ 의 커밋된 상태로 빌드 진행.`);
     return;
   }
-  if (!(await exists(VAULT_ROOT))) {
+  if (!(await exists(vaultRoot))) {
     console.log(`ℹ️  OBSIDIAN_VAULT_ROOT 가 가리키는 경로가 존재하지 않음 — sync 건너뜀.`);
-    console.log(`    설정된 값: ${VAULT_ROOT}`);
+    console.log(`    설정된 값: ${vaultRoot}`);
     console.log(`    docs/guide/ 의 커밋된 상태 그대로 빌드 진행.`);
     return;
   }
-  console.log(`   from: ${VAULT_ROOT}`);
-  console.log(`   to:   ${DOCS_ROOT}\n`);
-  await fs.mkdir(DOCS_ROOT, { recursive: true });
+  console.log(`   from: ${vaultRoot}`);
+  console.log(`   to:   ${docsRoot}\n`);
+  await fs.mkdir(docsRoot, { recursive: true });
 
-  let copied = 0, deleted = 0, unchanged = 0, removedDirs = 0;
+  const stats = { copied: 0, deleted: 0, unchanged: 0, removedDirs: 0, protectedSeries: 0 };
 
+  // 시리즈 단위 합집합 순회. vault 에서 사라진 시리즈는 (--force 일 때만) repo 에서도 제거.
+  const seriesList = unionSeries(
+    await discoverSeries(vaultRoot),
+    await discoverSeries(docsRoot),
+  );
+
+  for (const series of seriesList) {
+    const vaultSeries = path.join(vaultRoot, series);
+    const docsSeries = path.join(docsRoot, series);
+
+    if (!(await exists(vaultSeries))) {
+      if (await exists(docsSeries)) {
+        if (!force) {
+          // vault 에 시리즈가 통째로 없음 — iCloud 부분 동기화/잘못된 경로일 수 있어
+          // 대량 삭제를 보류한다. 의도한 삭제면 --force.
+          console.warn(`  ⛔ ${series}/ 가 vault 에 없음 — 통째 삭제 보류 (의도한 삭제면 --force).`);
+          stats.protectedSeries++;
+        } else {
+          await fs.rm(docsSeries, { recursive: true, force: true });
+          console.log(`  🗑  ${series}/ (vault 에서 사라짐 → repo 에서도 제거)`);
+          stats.removedDirs++;
+        }
+      }
+      continue;
+    }
+
+    await forwardSeries(vaultSeries, docsSeries, `${series}/`, stats);
+  }
+
+  const dirNote = stats.removedDirs ? ` / 삭제 디렉토리 ${stats.removedDirs}` : '';
+  const protNote = stats.protectedSeries ? ` / 보류된 시리즈 ${stats.protectedSeries} (--force 로 삭제)` : '';
+  console.log(`\n✅ 완료: 복사 ${stats.copied} / 삭제 ${stats.deleted} / 변경없음 ${stats.unchanged}${dirNote}${protNote}`);
+}
+
+// 한 시리즈 안의 ^\d+- 챕터들을 vault → docs 로 미러. 카운터는 stats 에 누적.
+async function forwardSeries(vaultBase, docsBase, prefix, stats) {
   // vault 와 repo 양쪽을 스캔해 합집합을 순회. vault 에 새로 생긴 챕터는 자동으로
   // 추적되고, vault 에서 사라졌지만 repo 에 남은 orphan 챕터는 청소된다.
-  const vaultChapters = await discoverChapters(VAULT_ROOT);
-  const docsChapters = await discoverChapters(DOCS_ROOT);
-  const chapters = [...new Set([...vaultChapters, ...docsChapters])].sort((a, b) => {
-    const na = parseInt(a, 10);
-    const nb = parseInt(b, 10);
-    return na !== nb ? na - nb : a.localeCompare(b);
-  });
+  const chapters = unionChapters(
+    await discoverChapters(vaultBase),
+    await discoverChapters(docsBase),
+  );
 
   for (const chapter of chapters) {
-    const vaultChap = path.join(VAULT_ROOT, chapter);
-    const docsChap = path.join(DOCS_ROOT, chapter);
+    const vaultChap = path.join(vaultBase, chapter);
+    const docsChap = path.join(docsBase, chapter);
 
     // true mirror: vault 에 챕터 폴더가 없으면 repo 에서도 통째로 제거.
     // (예: 옵시디언에서 챕터를 삭제 → 다음 sync 에 repo 도 따라옴)
     if (!(await exists(vaultChap))) {
       if (await exists(docsChap)) {
         await fs.rm(docsChap, { recursive: true, force: true });
-        console.log(`  🗑  ${chapter}/ (vault 에서 사라짐 → repo 에서도 제거)`);
-        removedDirs++;
+        console.log(`  🗑  ${prefix}${chapter}/ (vault 에서 사라짐 → repo 에서도 제거)`);
+        stats.removedDirs++;
       }
       continue;
     }
@@ -167,7 +234,7 @@ async function syncForward() {
     // 빈 vault 챕터는 미러할 게 없어 조용히 지나가는데, 디버깅 단서로 한 줄 남긴다.
     // (사용자가 폴더만 만들고 index.md 를 안 채운 케이스 잡기)
     if (vaultFiles.length === 0 && docsFiles.length === 0) {
-      console.log(`  ℹ️  ${chapter}/ 비어있음 — index.md 가 없어 사이트에 안 올라옴`);
+      console.log(`  ℹ️  ${prefix}${chapter}/ 비어있음 — index.md 가 없어 사이트에 안 올라옴`);
       continue;
     }
 
@@ -179,59 +246,76 @@ async function syncForward() {
         const [a, b] = await Promise.all([fs.readFile(abs), fs.readFile(destAbs)]);
         same = a.equals(b);
       }
-      if (same) { unchanged++; continue; }
+      if (same) { stats.unchanged++; continue; }
       await fs.mkdir(path.dirname(destAbs), { recursive: true });
       await fs.copyFile(abs, destAbs);
-      console.log(`  ✏️  ${chapter}/${rel}`);
-      copied++;
+      console.log(`  ✏️  ${prefix}${chapter}/${rel}`);
+      stats.copied++;
     }
 
     // repo 에만 있는 파일 삭제 (vault 가 source-of-truth)
     for (const { rel, abs } of docsFiles) {
       if (!vaultRels.has(rel)) {
-        console.log(`  ➖ ${chapter}/${rel}`);
+        console.log(`  ➖ ${prefix}${chapter}/${rel}`);
         await fs.unlink(abs).catch(() => {});
-        deleted++;
+        stats.deleted++;
       }
     }
   }
-
-  const dirNote = removedDirs ? ` / 챕터 삭제 ${removedDirs}` : '';
-  console.log(`\n✅ 완료: 복사 ${copied} / 삭제 ${deleted} / 변경없음 ${unchanged}${dirNote}`);
 }
 
 /* ─── reverse: docs/guide → vault (대화형 승인) ──────────────── */
 
-async function syncReverse() {
-  if (!VAULT_ROOT) {
+export async function syncReverse({ vaultRoot = VAULT_ROOT, docsRoot = DOCS_ROOT, autoYes = AUTO_YES, showDiffs = true, rl } = {}) {
+  if (!vaultRoot) {
     console.error(`❌ OBSIDIAN_VAULT_ROOT 미설정 — reverse sync 는 vault 가 필수.`);
     console.error(`    .env.local 파일에 OBSIDIAN_VAULT_ROOT=<vault 절대경로> 추가하세요.`);
     process.exit(1);
   }
   console.log(`\n📥 repo → obsidian (파일별 승인)`);
-  console.log(`   from: ${DOCS_ROOT}`);
-  console.log(`   to:   ${VAULT_ROOT}\n`);
+  console.log(`   from: ${docsRoot}`);
+  console.log(`   to:   ${vaultRoot}\n`);
 
-  const rl = AUTO_YES
-    ? null
-    : readline.createInterface({ input: process.stdin, output: process.stdout });
+  const state = {
+    applied: 0, skipped: 0, unchanged: 0, errors: 0,
+    applyRest: false, // 'a' 누르면 남은 거 전부 자동 적용
+    autoYes, showDiffs,
+    // rl 주입 가능(테스트용). 주입 안 했으면 직접 생성하고, 끝나면 우리가 닫는다.
+    rl: rl ?? (autoYes ? null : readline.createInterface({ input: process.stdin, output: process.stdout })),
+    ownsRl: !rl,
+  };
 
-  let applied = 0, skipped = 0, unchanged = 0, errors = 0;
-  let applyRest = false; // 'a' 누르면 남은 거 전부 자동 적용
+  // 시리즈 단위 합집합 순회. repo 에만 있는 시리즈/챕터의 파일은 'create' 로 잡힘.
+  const seriesList = unionSeries(
+    await discoverSeries(vaultRoot),
+    await discoverSeries(docsRoot),
+  );
 
-  // reverse 도 동일하게 자동 스캔. repo 에 있지만 vault 에 없는 챕터의 파일은
-  // 'create' diff 로 잡혀서 vault 에 추가될 수 있도록 합집합 순회.
-  const vaultChapters = await discoverChapters(VAULT_ROOT);
-  const docsChapters = await discoverChapters(DOCS_ROOT);
-  const chapters = [...new Set([...vaultChapters, ...docsChapters])].sort((a, b) => {
-    const na = parseInt(a, 10);
-    const nb = parseInt(b, 10);
-    return na !== nb ? na - nb : a.localeCompare(b);
-  });
+  for (const series of seriesList) {
+    const quit = await reverseSeries(
+      path.join(vaultRoot, series),
+      path.join(docsRoot, series),
+      `${series}/`,
+      state,
+    );
+    if (quit) break;
+  }
+
+  if (state.ownsRl && state.rl) state.rl.close();
+  printReverseStats(state);
+}
+
+// 한 시리즈 안의 챕터들을 docs → vault 로 (파일별 승인) 반영. quit 누르면 true 반환.
+async function reverseSeries(vaultBase, docsBase, prefix, state) {
+  // repo 에 있지만 vault 에 없는 챕터의 파일은 'create' 로 잡히도록 합집합 순회.
+  const chapters = unionChapters(
+    await discoverChapters(vaultBase),
+    await discoverChapters(docsBase),
+  );
 
   for (const chapter of chapters) {
-    const vaultChap = path.join(VAULT_ROOT, chapter);
-    const docsChap = path.join(DOCS_ROOT, chapter);
+    const vaultChap = path.join(vaultBase, chapter);
+    const docsChap = path.join(docsBase, chapter);
 
     const vaultFiles = await listFilesRel(vaultChap);
     const docsFiles = await listFilesRel(docsChap);
@@ -242,13 +326,13 @@ async function syncReverse() {
     for (const rel of allRels) {
       const vaultAbs = vaultMap.get(rel);
       const docsAbs = docsMap.get(rel);
-      const fullRel = `${chapter}/${rel}`;
+      const fullRel = `${prefix}${chapter}/${rel}`;
 
       let action = null, oldContent = '', newContent = '';
 
       if (vaultAbs && docsAbs) {
         const [v, d] = await Promise.all([fs.readFile(vaultAbs), fs.readFile(docsAbs)]);
-        if (v.equals(d)) { unchanged++; continue; }
+        if (v.equals(d)) { state.unchanged++; continue; }
         oldContent = v.toString('utf8');
         newContent = d.toString('utf8');
         action = 'update';
@@ -265,17 +349,17 @@ async function syncReverse() {
       console.log(`\n${'━'.repeat(70)}`);
       console.log(`${emoji} ${fullRel}  ${note}`);
       console.log('━'.repeat(70));
-      await showDiff(oldContent, newContent, fullRel);
+      if (state.showDiffs) await showDiff(oldContent, newContent, fullRel);
       console.log('');
 
       let decision = 'skip';
-      if (AUTO_YES || applyRest) decision = 'apply';
+      if (state.autoYes || state.applyRest) decision = 'apply';
       else {
-        const ans = (await rl.question(
+        const ans = (await state.rl.question(
           '   적용? [y]es / [n]o / [a]ll remaining / [q]uit > ',
         )).trim().toLowerCase();
         if (ans === 'y' || ans === 'yes') decision = 'apply';
-        else if (ans === 'a' || ans === 'all') { decision = 'apply'; applyRest = true; }
+        else if (ans === 'a' || ans === 'all') { decision = 'apply'; state.applyRest = true; }
         else if (ans === 'q' || ans === 'quit') decision = 'quit';
       }
 
@@ -290,24 +374,22 @@ async function syncReverse() {
             await fs.copyFile(docsAbs, target);
             console.log('   ✅ vault 에 적용');
           }
-          applied++;
+          state.applied++;
         } catch (err) {
           console.error(`   ❌ 실패: ${err.message}`);
-          errors++;
+          state.errors++;
         }
       } else if (decision === 'quit') {
         console.log('   ⏹  중단');
-        if (rl) rl.close();
-        return printReverseStats({ applied, skipped, unchanged, errors });
+        return true;
       } else {
         console.log('   ⏭  건너뜀');
-        skipped++;
+        state.skipped++;
       }
     }
   }
 
-  if (rl) rl.close();
-  printReverseStats({ applied, skipped, unchanged, errors });
+  return false;
 }
 
 function printReverseStats(s) {
@@ -343,7 +425,11 @@ async function main() {
   else console.log('취소됨');
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// CLI 진입점일 때만 실행. 테스트가 import 해도 main() 이 안 돌도록 가드.
+const isCliEntry = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isCliEntry) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

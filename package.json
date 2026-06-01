@@ -5,6 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "test": "node --test scripts/sync.test.mjs docs/.vitepress/markdown-obsidian.test.mjs",
     "sync": "node --env-file-if-exists=.env.local scripts/sync.mjs",
     "dev": "node --env-file-if-exists=.env.local scripts/sync.mjs --forward && vitepress dev docs",
     "build": "node --env-file-if-exists=.env.local scripts/sync.mjs --forward && vitepress build docs",

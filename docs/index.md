@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: 1편부터 시작하기
-      link: /guide/1-prep/
+      link: /guide/local-llm-0-to-1/1-prep/
     - theme: alt
       text: GitHub에서 보기
       link: https://github.com/mannerism/local-llm-kor
