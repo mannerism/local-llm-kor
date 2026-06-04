@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://local-llm-kor.vercel.app/sitemap.xml
