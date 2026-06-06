@@ -1,6 +1,6 @@
 ---
 tags: [reference, llm, llama.cpp, benchmark]
-last_updated: 2026-05-24
+last_updated: 2026-06-07
 ---
 
 # 모델 시험 해보기
@@ -24,9 +24,10 @@ llama-server \
   --spec-type draft-mtp --spec-draft-n-max 3 \
   --jinja \
   --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
-  -np 1 -c 131072 \
+  -np 1 -c 262144 \
   --temp 0.7 --top-k 20 \
-  -ngl 99 --port 8081
+  -ngl 99 --port 8081 \
+  -fa off --cache-type-k f16 --cache-type-v f16 -tb 18
 ```
 
 플래그 의미는 [[inference-flags]]·[[acceleration]] 참고.
@@ -34,6 +35,9 @@ llama-server \
 모델 로딩 1~2분 후 `server is listening on port 8081` 메시지 뜨면 준비 완료.
 
 ![[Xnip2026-05-10_11-12-33.png]]
+> **⚠️ pi 컨텍스트 길이 보정**
+> llama-server가 `-c 262144`로 실행되더라도, `~/.pi/agent/models.json`의 `contextWindow`가 131072로 하드코딩되어 있으면 pi는 131k만 인식합니다. 반드시 해당 값을 262144로 맞춰주세요.
+
 ### 터미널 B — mactop으로 시스템 모니터링
 
 ```sh
