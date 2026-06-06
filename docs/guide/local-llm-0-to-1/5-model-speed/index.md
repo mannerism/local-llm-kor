@@ -39,21 +39,26 @@
 
 ---
 
+### 6. KV Cache (키-밸류 캐시)
+![[kv-cache]]
+
+---
+
 ## 소프트웨어 — 마지막 최적화
 
-### 6. 추론 엔진과 플래그 튜닝
+### 7. 추론 엔진과 플래그 튜닝
 ![[inference-flags]]
 
 ---
 
-### 7. 추론 가속 기술 (MTP, Speculative Decoding 등)
+### 8. 추론 가속 기술 (MTP, Speculative Decoding 등)
 ![[acceleration]]
 
 ---
 
 ## 실전 — 어떻게 살까
 
-### 8. 하드웨어 구매 가이드
+### 9. 하드웨어 구매 가이드
 ![[hardware-buying-guide]]
 
 ---
@@ -68,6 +73,7 @@
 | 4 | Dense vs MoE | 5~10x (MoE 유리) |
 | 5 | 가속 기술 (MTP, Flash Attention 등) | 2~3x |
 | 6 | 컨텍스트 길이 | prefill에 영향 |
+| 6 | KV Cache 양자화 (f16 vs q8/q4) | 품질 ↔ VRAM |
 | 7 | 플래그 튜닝 (`-c`, `-fa`, `-ngl`) | 1.5~2x |
 
 새 맥을 사거나 모델을 고를 때 위 순서대로 우선순위를 두면 후회할 일이 적어요.

@@ -74,23 +74,9 @@ llama-server -m big-model.gguf --model-draft small-model.gguf
 - 일부 오래된 양자화 형식과 호환 안 될 수 있음
 - 짧은 입력엔 효과 미미
 
-## 4. KV Cache Quantization
+## 4. KV Cache 양자화
 
-**KV 캐시 자체도 양자화해서 메모리를 줄이는 기법.** 컨텍스트가 길 때 KV 캐시가 GB 단위로 부담스러운데, 이걸 8비트로 양자화하면 메모리가 절반으로 줄어요.
-
-```sh
-llama-server -m model.gguf --cache-type-k q8_0 --cache-type-v q8_0
-```
-
-**👍 장점**
-- KV 캐시 메모리 50% 절감 (q8_0) 또는 75% 절감 (q4_0)
-- 더 긴 컨텍스트 가능, 또는 그만큼 다른 거 메모리 여유
-- Flash Attention과 함께 쓰면 효과 더 큼
-
-**👎 단점**
-- 속도는 안 빨라짐 (오히려 미세하게 느려질 수 있음)
-- 양자화 레벨 낮추면(q4) 긴 컨텍스트에서 품질 살짝 떨어짐
-- 일부 모델·플랫폼에서 호환 안 될 수 있음 (Flash Attention 필수인 경우 많음)
+[[kv-cache]] 참고. 메모리 부족할 때만 고려하고, 품질이 중요하면 f16(압축 없음) 유지하는 게 최선입니다.
 
 ## 비교 표
 
@@ -99,7 +85,7 @@ llama-server -m model.gguf --cache-type-k q8_0 --cache-type-v q8_0
 | MTP | 2.5x | 변화 없음 | 모델 자체가 지원해야 함 |
 | Speculative Decoding | 1.5~3x | 작은 모델 추가로 메모리 ↑ | 두 모델 받아야 함 |
 | Flash Attention | 1.5~2x (prefill만) | 변화 없음 | 플래그 하나 |
-| KV Cache 양자화 | 변화 없음 | 메모리 ↓ 50% | 플래그 추가 |
+| KV Cache 양자화 | 변화 없음 | 메모리 ↓ 50% | [[kv-cache]] 참고 |
 
 ## 정리
 
@@ -109,8 +95,7 @@ llama-server -m model.gguf --cache-type-k q8_0 --cache-type-v q8_0
 llama-server -m qwen3.6-27b-mtp.gguf \
   --spec-type draft-mtp \
   --spec-draft-n-max 3 \
-  -fa \
-  --cache-type-k q8_0 --cache-type-v q8_0
+  -fa
 ```
 
-이렇게 하면 **MTP + Flash Attention + KV 양자화**가 다 켜져서 메모리는 아끼면서 속도는 최대치로 끌어올릴 수 있어요.
+메모리가 부족하면 [[kv-cache]]를 참고해 KV 캐시 양자화 플래그도 추가하면 됩니다. 메모리가 충분하다면 MTP + Flash Attention 조합만으로 충분해요.

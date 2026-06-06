@@ -34,7 +34,7 @@ llama-server -m ~/models/qwen3.6-27b-Q4_K_M.gguf
 -c 131072  # 128K (책 한 권)
 ```
 
-작을수록 KV 캐시 덜 먹고 빠릅니다.
+작을수록 [[kv-cache|KV 캐시]] 덜 먹고 빠릅니다.
 
 ### `-ngl` — GPU에 올릴 레이어 수
 ```sh
