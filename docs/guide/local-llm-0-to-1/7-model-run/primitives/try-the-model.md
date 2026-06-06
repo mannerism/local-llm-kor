@@ -20,14 +20,17 @@ last_updated: 2026-06-07
 
 ```sh
 llama-server \
-  -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
-  --spec-type draft-mtp --spec-draft-n-max 3 \
-  --jinja \
-  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
-  -np 1 -c 262144 \
-  --temp 0.7 --top-k 20 \
-  -ngl 99 --port 8081 \
-  -fa off --cache-type-k f16 --cache-type-v f16 -tb 18
+   -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
+   --spec-type draft-mtp --spec-draft-n-max 3 \
+   --spec-draft-p-min 0.75 \
+   --jinja \
+   --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
+   -np 1 -c 262144 \
+   --temp 0.7 --top-k 20 \
+   -ngl 99 --port 8081 \
+   -fa off --cache-type-k q8_0 --cache-type-v q8_0 \
+   -tb 18 \
+   --no-mmap --mlock
 ```
 
 플래그 의미는 [[inference-flags]]·[[acceleration]] 참고.

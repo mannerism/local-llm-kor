@@ -40,13 +40,17 @@ sudo sysctl iogpu.wired_limit_mb=114688
 
 ```sh
 llama-server \
-  -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
-  --spec-type draft-mtp --spec-draft-n-max 3 \
-  --jinja \
-  --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
-  -np 1 -c 131072 \
-  --temp 0.7 --top-k 20 \
-  -ngl 99 --port 8081
+   -m ~/models/qwen3.6-27b-mtp/Qwen3.6-27B-Q8_0-mtp.gguf \
+   --spec-type draft-mtp --spec-draft-n-max 3 \
+   --spec-draft-p-min 0.75 \
+   --jinja \
+   --chat-template-file ~/models/qwen3.6-templates/chat_template.jinja \
+   -np 1 -c 262144 \
+   --temp 0.7 --top-k 20 \
+   -ngl 99 --port 8081 \
+   -fa off --cache-type-k q8_0 --cache-type-v q8_0 \
+   -tb 18 \
+   --no-mmap --mlock
 ```
 
 27B만 가동된 상태의 mactop — 메모리 약 **65 GB** 사용:
